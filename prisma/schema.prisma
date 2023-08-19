@@ -11,14 +11,14 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
   firstName String? //can be null(optional)
   lastName  String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   //relationship
-  notes     Product[]
+  notes     Order[]
   account   Account?
 
   @@map("users") //users id "table's name" in Postgres SQL
@@ -35,16 +35,43 @@ model Account {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String
-  url         String
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  url          String
   // other fields ...
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
   //relationship
-  userId      Int //like "foreign key"
-  user        User     @relation(fields: [userId], references: [id])
+  orderdetails OrderDetails[]
 
   @@map("products")
+}
+
+model Order {
+  id Int @id @default(autoincrement())
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  //relationship
+  userId       Int //like "foreign key"
+  user         User           @relation(fields: [userId], references: [id])
+  orderdetails OrderDetails[]
+
+  @@map("orders")
+}
+
+model OrderDetails {
+  id Int @id @default(autoincrement())
+
+  quantity  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  //relationship
+  productId Int //like "foreign key"
+  orderId   Int
+  product   Product  @relation(fields: [productId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id])
+
+  @@map("orderdetails")
 }
