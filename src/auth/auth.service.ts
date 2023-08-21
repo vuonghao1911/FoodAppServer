@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PirsmaService } from 'src/pirsma/pirsma.service';
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from "@nestjs/config";
@@ -46,7 +46,7 @@ export class AuthService {
             }
             return await this.signJwtToken(user.id, user.email)
         } catch (error) {
-
+            throw new BadRequestException()
         }
     }
 
@@ -80,9 +80,11 @@ export class AuthService {
             )
         }
         const jwt = await this.signJwtToken(user.id, user.username)
+        const refreshJwt = await this.signJwtRefreshToken(user.id, user.username)
         return {
             ...userLogin,
-            ...jwt
+            ...jwt,
+            ...refreshJwt,
         }
     }
 
@@ -98,6 +100,41 @@ export class AuthService {
         })
         return {
             accessToken: jwtString,
+        }
+    }
+    async signJwtRefreshToken(userId: number, email: string)
+        : Promise<{ refreshToken: string }> {
+        const payload = {
+            id: userId,
+            email
+        }
+        const jwtString = await this.jwtService.signAsync(payload, {
+            expiresIn: '40m',
+            secret: this.configService.get('JWT_REFRESH_SECRET')
+        })
+        return {
+            refreshToken: jwtString,
+        }
+    }
+    async refreshToken(refreshToken: string) {
+        try {
+            const payload = await this.jwtService.verifyAsync(refreshToken, {
+                secret: this.configService.get("JWT_REFRESH_SECRET")
+            })
+            console.log(payload)
+            if (!payload) {
+                throw new ForbiddenException("Invalid refresh token")
+            }
+            const newAccsessToken = await this.signJwtToken(payload.id, payload.email)
+            const newRefreshToken = await this.signJwtRefreshToken(payload.id, payload.email)
+            return {
+                ...newAccsessToken,
+                ...newRefreshToken,
+                message: "Refresh token successfully"
+
+            }
+        } catch (error) {
+            throw new UnauthorizedException("Invalid refresh token");
         }
     }
 }
