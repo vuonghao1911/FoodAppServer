@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PirsmaService } from 'src/pirsma/pirsma.service';
 import { OrderCreateDTO } from './dto/order.create.dto';
 
@@ -19,9 +19,66 @@ export class OrderService {
                 }
             })
             return newOrder
-
         } catch (error) {
             throw new BadRequestException()
+        }
+    }
+    async getAllOrderByIdUser(userId: number) {
+        try {
+            const listOrder = await this.prismaSevice.order.findMany({
+                include: {
+                    orderdetails: {
+                        include: {
+                            product: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    url: true
+                                },
+                            }
+                        }
+                    }
+                },
+                where: {
+                    userId: userId,
+                }
+            })
+            return listOrder
+        } catch (error) {
+            throw new NotFoundException(error.message)
+        }
+    }
+    async getAllOrderByProductId(userId: number, productId: number) {
+        try {
+            const listOrder = await this.prismaSevice.order.findMany({
+                include: {
+                    orderdetails: {
+                        include: {
+                            product: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    url: true
+                                },
+                            }
+                        }
+                    }
+                },
+                where: {
+                    userId: userId,
+                    orderdetails: {
+                        some: {
+                            productId: {
+                                equals: productId
+                            }
+                        }
+                    }
+                }
+            })
+            return listOrder
+        } catch (error) {
+            console.log(error)
+            throw new NotFoundException(error.message)
         }
     }
 }
