@@ -23,4 +23,33 @@ export class ProductService {
         }
     }
 
+    async deleteProduct(productId: number) {
+
+        try {
+            return this.prismaService.product.delete({
+                where: {
+                    id: productId
+                }
+            })
+        } catch (error) {
+            throw new BadRequestException()
+        }
+    }
+
+    async updateStatus(productId: number, status: boolean) {
+
+        try {
+            return this.prismaService.product.update({
+                where: {
+                    id: productId
+                },
+                data: {
+                    status: status
+                }
+            })
+        } catch (error) {
+            throw new BadRequestException()
+        }
+    }
+
 }

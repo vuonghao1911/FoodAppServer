@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PirsmaService } from 'src/pirsma/pirsma.service';
 import { OrderCreateDTO } from './dto/order.create.dto';
 
@@ -76,6 +76,33 @@ export class OrderService {
                 }
             })
             return listOrder
+        } catch (error) {
+            console.log(error)
+            throw new NotFoundException(error.message)
+        }
+    }
+
+    async deleteItemOrder(orderId: number, productId: number) {
+        try {
+            const order = await this.prismaSevice.order.findUnique({
+                where: {
+                    id: orderId,
+                    status: 0
+                }
+
+            })
+            if (!order) {
+                throw new ForbiddenException("can not delete order")
+            }
+            return this.prismaSevice.orderDetails.delete({
+                where: {
+                    productId_orderId: {
+                        orderId: orderId,
+                        productId: productId
+                    }
+                },
+            })
+
         } catch (error) {
             console.log(error)
             throw new NotFoundException(error.message)

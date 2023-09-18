@@ -17,9 +17,13 @@ model User {
   lastName  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  role      String   @default("Admin")
   //relationship
   notes     Order[]
   account   Account?
+
+  priceHeaderUpDate PriceHeader[] @relation("user_update")
+  priceHeaderCreate PriceHeader[] @relation("user_create")
 
   @@map("users") //users id "table's name" in Postgres SQL
 }
@@ -39,18 +43,20 @@ model Product {
   name         String
   description  String
   url          String
+  status       Boolean        @default(true)
   // other fields ...
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   //relationship
   orderdetails OrderDetails[]
+  priceLine    PriceLine[]
 
   @@map("products")
 }
 
 model Order {
-  id Int @id @default(autoincrement())
-
+  id           Int            @id @default(autoincrement())
+  status       Int            @default(0)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   //relationship
@@ -62,16 +68,50 @@ model Order {
 }
 
 model OrderDetails {
-  id Int @id @default(autoincrement())
-
   quantity  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   //relationship
   productId Int //like "foreign key"
   orderId   Int
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   order     Order    @relation(fields: [orderId], references: [id])
 
+  @@id([productId, orderId])
   @@map("orderdetails")
+}
+
+model PriceHeader {
+  id Int @id @default(autoincrement())
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  startDate    DateTime
+  endDate      DateTime
+  status       Boolean  @default(false)
+  userIdCreate Int
+  userIdUpdate Int
+
+  userCreate User?       @relation("user_create", fields: [userIdCreate], references: [id])
+  userUpdate User?       @relation("user_update", fields: [userIdUpdate], references: [id])
+  priceLine  PriceLine[]
+
+  @@map("priceheaders")
+}
+
+model PriceLine {
+  id Int @id @default(autoincrement())
+
+  price         Decimal  @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  //relationship
+  priceHeaderId Int //like "foreign key"
+  productId     Int?
+
+  product     Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  priceHeader PriceHeader @relation(fields: [priceHeaderId], references: [id])
+
+  @@unique([priceHeaderId, productId])
+  @@map("pricelines")
 }
