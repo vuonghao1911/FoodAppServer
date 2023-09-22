@@ -5,6 +5,8 @@ import { ConfigService } from "@nestjs/config";
 import * as argon from 'argon2';
 import { AuthUserDTO } from './dto/auth.user.dto';
 import { AuthAccountDTO } from './dto/auth.account.dto';
+import { NextFunction } from 'express';
+import createHttpError from 'http-errors';
 
 
 @Injectable()
@@ -59,9 +61,7 @@ export class AuthService {
                 }
             })
         if (!user) {
-            throw new ForbiddenException(
-                'User not found'
-            )
+            throw new BadRequestException("User not found")
         }
         const userLogin = await this.prismaService.user.findUnique({
             where: {

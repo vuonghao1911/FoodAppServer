@@ -1,7 +1,8 @@
-import { Controller, Post, Req, Body, ParseIntPipe } from "@nestjs/common";
+import { Controller, Post, Req, Body, ParseIntPipe, Res, ForbiddenException, Next, BadRequestException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AuthUserDTO } from "./dto/auth.user.dto";
 import { AuthAccountDTO } from "./dto/auth.account.dto";
+import { Response, NextFunction } from "express"
 //import a "folder"
 @Controller('auth')
 export class AuthController {
@@ -16,8 +17,20 @@ export class AuthController {
     }
     // POST: .../auth/login
     @Post("login")
-    login(@Body() authDTO: AuthAccountDTO) {
-        return this.authService.login(authDTO);
+    async login(@Res() res: Response, @Body() authDTO: AuthAccountDTO) {
+
+        try {
+            const usr = await this.authService.login(authDTO)
+            console.log(usr)
+
+            return res.status(200).json({ data: usr })
+        } catch (error) {
+            console.log(error);
+
+
+            return res.status(500).send(error.response)
+
+        }
     }
     @Post("refresh-token")
     RefreshToken(@Body("refreshToken") refreshToken: string) {
