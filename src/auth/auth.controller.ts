@@ -2,7 +2,8 @@ import { Controller, Post, Req, Body, ParseIntPipe, Res, ForbiddenException, Nex
 import { AuthService } from "./auth.service";
 import { AuthUserDTO } from "./dto/auth.user.dto";
 import { AuthAccountDTO } from "./dto/auth.account.dto";
-import { Response, NextFunction } from "express"
+import { Response, NextFunction, Request } from "express"
+var requestIp = require('request-ip');
 //import a "folder"
 @Controller('auth')
 export class AuthController {
@@ -17,9 +18,11 @@ export class AuthController {
     }
     // POST: .../auth/login
     @Post("login")
-    async login(@Res() res: Response, @Body() authDTO: AuthAccountDTO) {
+    async login(@Req() req: Request, @Res() res: Response, @Body() authDTO: AuthAccountDTO) {
 
         try {
+            console.log(req.connection.remoteAddress)
+            console.log(requestIp.getClientIp(req))
             const usr = await this.authService.login(authDTO)
             console.log(usr)
 
